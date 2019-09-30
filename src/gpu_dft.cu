@@ -1,13 +1,15 @@
 #include <cuda_runtime.h>
 #include "complex.h"
 
+const size_t N_PTS = 6144; // 2048 x 3 
+
 void __global__ gpuDFT(unsigned npts, float * pts, unsigned nq, float * qvals, cucomplex_t * ft) {
-	/* lucky we have excatly 4000 particles. 4000 X 3 should fit on most modern GPUs.
-     * If more particles are needed in future, we need to do some memory maneuvering gymnastics.
-	 */
+	 
 	const cucomplex_t NEG_I = make_cuFloatComplex(0.f, -1.f);
 	// compute dft
+
 	unsigned i = blockDim.x * blockIdx.x  + threadIdx.x;
+
 	if (i < nq) {
 		ft[i] = make_cuFloatComplex(0.f, 0.f);
 		for (unsigned j = 0; j < npts; j++) {
