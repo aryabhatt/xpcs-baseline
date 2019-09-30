@@ -1,6 +1,6 @@
 # 3d Lennard-Jones melt
 
-units	lj
+units	real
 atom_style	atomic
 
 lattice	fcc 0.8442
@@ -24,7 +24,7 @@ variable fitslope equal slope(f_2)/6/dt
 
 thermo_style	custom step temp c_1[4] v_fitslope
 
-dump 2 all custom 1000 al.*.bin id x y z
+dump 2 all custom 100 al.*.txt x y z
 
 thermo	1000
 run	60000
