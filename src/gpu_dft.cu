@@ -1,14 +1,15 @@
+#include <stdio.h>
 #include <cuda_runtime.h>
+#include <cuda.h>
+
 #include "complex.h"
 #include "mdscatter.h"
 
+const int N_PTS = 512;
 __constant__ float rsq;
 
 
-//const size_t N_PTS = 6144; // 2048 x 3 
-const int N_PTS = 512;
-
-void __global__ gpuDFT(unsigned npts, float * pts, unsigned nq, float * qvals, cucomplex_t * ft) {
+__global__ void gpuDFT(int npts, float * pts, int nq, float * qvals, cucomplex_t * ft) {
 
     const cucomplex_t NEG_I = make_cuFloatComplex(0.f, -1.f);
 
@@ -16,8 +17,8 @@ void __global__ gpuDFT(unsigned npts, float * pts, unsigned nq, float * qvals, c
 
     __shared__ float shamem [N_PTS * 3];
 	int nfills =  npts / N_PTS;
-    if (npts % N_PTS) nfills++;
 
+    if (npts % N_PTS) nfills++;
     int np = N_PTS;
     for (int ifill = 0; ifill < nfills; ifill++) {
         int pnt_idx = ifill * N_PTS + threadIdx.x;
@@ -27,12 +28,13 @@ void __global__ gpuDFT(unsigned npts, float * pts, unsigned nq, float * qvals, c
             for (int k = 0; k < 3; k++) 
                 shamem[threadIdx.x * 3 + k] = pts[pnt_idx * 3 + k];
         }
+        __syncthreads();
 
             // compute dft
         if (idx < nq) {
-            for (unsigned j = 0; j < np; j++) {
+            for (int j = 0; j < np; j++) {
 			    float q_r = 0;
-			    for (unsigned k = 0; k < 3; k++) 
+			    for (int k = 0; k < 3; k++) 
 				    q_r += qvals[3 * idx + k] * shamem[3 * j + k];
 			    ft[idx] = ft[idx] + Cexpf(NEG_I * q_r); 
 		    }
@@ -49,8 +51,8 @@ py::array gpu_dft(np_array_t Pts, np_array_t qVals) {
         throw std::runtime_error("input arrays must of shape [N, 3]");
 
     /* size of input arrays */
-    unsigned npts = Pts.shape()[0];
-    unsigned nq = qVals.shape()[0];
+    int npts = Pts.shape()[0];
+    int nq = qVals.shape()[0];
 
     /* NumPy  will allocate the buffer */
     auto result = py::array_t<complex_t>(nq);
@@ -78,8 +80,8 @@ py::array gpu_dft(np_array_t Pts, np_array_t qVals) {
     cudaMemset(dft, sizeof(cucomplex_t) * nq, 0);
 
 	// device parameters
-	unsigned threads = N_PTS;
-	unsigned blocks = nq / threads; 
+	int threads = N_PTS;
+	int blocks = nq / threads; 
 	if (nq % threads != 0) blocks++;
 	gpuDFT<<< blocks, threads >>> (npts, dpts, nq, dqvals, dft);
 
