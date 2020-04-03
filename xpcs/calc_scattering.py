@@ -6,6 +6,7 @@ import os
 import re
 import h5py
 import time
+from loader import load_npy
 from detector import Lambda750k, Square512
 
 def filelist(path, pattern = None):
@@ -14,15 +15,6 @@ def filelist(path, pattern = None):
     m = re.compile(pattern)
     data_files = [ os.path.join(path, f) for f in os.listdir(path) if m.search(f) ]
     return sorted(data_files)
-
-
-def load_npy(npyfile, center = np.array([0, 0, 0]), scale = 1):
-    return (np.load(npyfile).T - center) * scale
-
-def form_factor(radius, qv):
-    q = np.sqrt(qv[:,0]**2 + qv[:,1]**2 + qv[:,2]**2)
-    qR = q * radius
-    return (4 * np.pi / q**3 * ( np.sin(qR) - qR * np.cos(qR)))
 
 if __name__ == '__main__':
 
@@ -35,8 +27,7 @@ if __name__ == '__main__':
 
     beam_rad = 6 * scale
     detector = Lambda750k()
-    qx, qy, qz = detector.qvectors(sdd, center, energy)
-    qvals = np.array([qx.ravel(), qy.ravel(), qz.ravel()]).T
+    qvecs = detector.qvectors(sdd, center, wavelen)
 
     outf = 'xpcs_out.h5'
     h5f = h5py.File(outf, 'w')

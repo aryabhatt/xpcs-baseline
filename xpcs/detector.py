@@ -8,9 +8,10 @@ class Detector:
         self.shape = shape
         self.pixle_size = pixle_size
 
-    def qvectors(self, sdd, center, energy):
+    def qvectors(self, sdd, center, wavelen):
         nrow = self.shape[0]
         ncol = self.shape[1]
+        qvec = np.zeros((nrow*ncol, 3), dtype=np.float32)
         y, x = np.mgrid[0:nrow, 0:ncol]
 
         # shift coordinate with center
@@ -29,17 +30,17 @@ class Detector:
         sin_al = y / tmp2
 
         # radius of the Ewald's sphere
-        k0 = 2 * np.pi * energy / 1.23984
+        k0 = 2 * np.pi / wavelen
 
         # q-vector
-        qx = k0 * (cos_al * cos_th - 1)
-        qy = k0 * (cos_al * sin_th)
-        qz = k0 * (sin_al)
-        return qx, qy, qz
+        qvec[:,0] = k0 * (cos_al * cos_th - 1).ravel()
+        qvec[:,1] = k0 * (cos_al * sin_th).ravel()
+        qvec[:,2] = k0 * (sin_al).ravel()
+        return qvec
 
-    def qvalues(self, sdd, center, energy):
-        qx, qy, qz = self.qvectors(sdd, center, energy)
-        return np.sqrt(qx**2 + qy**2 + qz**2)
+    def qvalues(self, sdd, center, wavelen):
+        q = self.qvectors(sdd, center, wavelen)
+        return np.linalg.norm(q, axis=1)
 
 
 class Lambda750k(Detector):
