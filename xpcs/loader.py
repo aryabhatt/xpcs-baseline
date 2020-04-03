@@ -1,5 +1,7 @@
 import numpy as np
 
+
+"""contributed by Jerome Kieffer from ESRF"""
 def load_lammps_bin(fname, center = np.array([0, 0, 0], scale =1):
     with open(fname, "rb") as fd:
         raw = fd.read()
