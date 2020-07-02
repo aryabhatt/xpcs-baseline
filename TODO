@@ -1,0 +1,8 @@
+1. Move scripts/*py to xpcs
+2. Test lammps_bin loader
+3. Create class for loader
+4. calc_scattering to be made importable
+5. fix "setup.py". Use autocorr as an example
+6. Write and example and test
+6. Upload to pypi
+7. Ambitious: dask workflow
