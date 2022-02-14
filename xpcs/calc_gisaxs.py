@@ -3,11 +3,9 @@
 import mdscatter
 import math
 import numpy as np
-import os
-import re
 import h5py
 import time
-import matplotlib.pyplot as plt
+import os
 
 from loader import list_lammps_txt_files, load_lammps_txt
 from fresnel import propagation_coeffs
