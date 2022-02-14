@@ -15,23 +15,16 @@ void __global__ gpuDFT(unsigned npts, float * pts, unsigned nq, float * qvals, c
 	if (i < nq) {
 		ft[i] = make_cuFloatComplex(0.f, 0.f);
 		for (unsigned j = 0; j < npts; j++) {
-			float q_r = 0;
-            float d = 0;
-            for (unsigned k = 0; k < 3; k++) d += pts[3*j+k] * pts[3*j+k];
-                //if (d > rsq) continue;
+			float q_dot_r = 0;
 			for (unsigned k = 0; k < 3; k++) 
-				q_r += qvals[3 * i + k] * pts[3 * j + k];
-			ft[i] = ft[i] + Cexpf(NEG_I * q_r) * expf(-d / rsq);
+				q_dot_r += qvals[3 * i + k] * pts[3 * j + k];
+			ft[i] = ft[i] + Cexpf(NEG_I * q_dot_r);
 		}
 	}
 }
 
 void cudft(unsigned npts, float * pts, unsigned nq, float * qvals,
-			complex_t * output, float beam_radius) {
-
-    // copy beam-radius (squared) to constant memory
-    float brsq = beam_radius * beam_radius;
-    cudaMemcpyToSymbol(rsq, &brsq, sizeof(float), 0, cudaMemcpyHostToDevice);
+			complex_t * output) {
 
 	// allocate memory on device
 	float * dpts, * dqvals;

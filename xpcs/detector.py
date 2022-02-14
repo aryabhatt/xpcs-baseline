@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import numpy as np
+from numpy import sin, cos
 
 class Detector:
     def __init__(self, name, shape, pixle_size):
@@ -8,10 +9,9 @@ class Detector:
         self.shape = shape
         self.pixle_size = pixle_size
 
-    def qvectors(self, sdd, center, wavelen):
+    def angles(self, sdd, center):
         nrow = self.shape[0]
         ncol = self.shape[1]
-        qvec = np.zeros((nrow*ncol, 3), dtype=np.float32)
         y, x = np.mgrid[0:nrow, 0:ncol]
 
         # shift coordinate with center
@@ -21,27 +21,72 @@ class Detector:
         # angles 
         # theta
         tmp = np.sqrt(x**2 + sdd**2)
-        cos_th = sdd / tmp
-        sin_th = x / tmp
+        theta = np.arcsin(x/tmp).ravel()
 
         # alpha
         tmp2 = np.sqrt(y**2 + tmp**2)
-        cos_al = tmp / tmp2
-        sin_al = y / tmp2
+        alpha = np.arcsin(y/tmp2).ravel()
 
-        # radius of the Ewald's sphere
+        return theta, alpha
+
+    def qvectors(self, sdd, center, wavelen):
+        theta, alpha = self.angles(sdd, center)
+
+        qvec = np.zeros((theta.shape[0], 3), dtype=np.float32)
+        # radius of Ewald's sphere
         k0 = 2 * np.pi / wavelen
 
         # q-vector
-        qvec[:,0] = k0 * (cos_al * cos_th - 1).ravel()
-        qvec[:,1] = k0 * (cos_al * sin_th).ravel()
-        qvec[:,2] = k0 * (sin_al).ravel()
+        qvec[:,0] = k0 * (cos(alpha) * cos(theta) - 1)
+        qvec[:,1] = k0 * (cos(alpha) * sin(theta))
+        qvec[:,2] = k0 * (sin(alpha))
         return qvec
 
     def qvalues(self, sdd, center, wavelen):
         q = self.qvectors(sdd, center, wavelen)
         return np.linalg.norm(q, axis=1)
 
+
+    def dwba_qvectors(self, sdd, center, wavelen, alphai):
+        theta, alpha = self.angles(sdd, center)
+
+        dims = (theta.shape[0], 3)
+        # radius of the Ewald's sphere
+        k0 = 2 * np.pi / wavelen
+
+        # q-vector
+        qx = k0 * (cos(alpha) * cos(theta) - cos(alphai))
+        qy = k0 * (cos(alpha) * sin(theta))
+        kzf = k0 * sin(alpha)
+        kzi = k0 * sin(alphai)
+
+        # (Ti, Tf)
+        q1 = np.zeros(dims, dtype=np.float32)
+        q1[:,0] = qx
+        q1[:,1] = qy
+        q1[:,2] = kzf+kzi
+
+        # (Ri, Tf)
+        q2 = np.zeros(dims, dtype=np.float32)
+        q2[:,0] = qx
+        q2[:,1] = qy
+        q2[:,2] = kzf-kzi
+
+        # (Ti, Rf)
+        q3 = np.zeros(dims, dtype=np.float32)
+        q3[:,0] = qx
+        q3[:,1] = qy
+        q3[:,2] = -kzf+kzi
+
+        # (Ri, Rf)
+        q4 = np.zeros(dims, dtype=np.float32)
+        q4[:,0] = qx
+        q4[:,1] = qy
+        q4[:,2] = -kzf-kzi
+
+        return [q1, q2, q3, q4]
+        
+       
 
 class Lambda750k(Detector):
     def __init__(self):

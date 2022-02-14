@@ -6,15 +6,9 @@ import os
 import re
 import h5py
 import time
-from loader import load_npy
+import matplotlib.pyplot as plt
+from loader import list_lammps_txt_files, load_lammps_txt
 from detector import Lambda750k, Square512
-
-def filelist(path, pattern = None):
-    if not os.path.isdir(path):
-        raise ValueError('illegal data path')
-    m = re.compile(pattern)
-    data_files = [ os.path.join(path, f) for f in os.listdir(path) if m.search(f) ]
-    return sorted(data_files)
 
 if __name__ == '__main__':
 
@@ -25,7 +19,6 @@ if __name__ == '__main__':
     scale = 28
     center = (0, 768)
 
-    beam_rad = 6 * scale
     detector = Lambda750k()
     qvecs = detector.qvectors(sdd, center, wavelen)
 
@@ -35,18 +28,23 @@ if __name__ == '__main__':
     qtmp = grp.create_dataset('q_points', (3, *detector.shape), 'f')
 
     # read data
-    pattern = '3(\d){4}'
-    npys = filelist('/home/dkumar/Data/np_arrays', pattern)
-    Nsteps = len(npys)
+    datadir = '../lammps'
+    pattern = 'al.*.txt'
+    txtfiles = list_lammps_txt_files(datadir, pattern)
+    Nsteps = len(txtfiles)
     dset = grp.create_dataset('imgs', (Nsteps, *detector.shape), 'f')    
-
+   
     # turn the crank
     t0 = time.time()
-    for i, npy in enumerate(npys):
-        pts = load_npy(npy, center = np.array([8, 8, 8]), scale = scale)
-        img = mdscatter.dft(pts, qvals, beam_rad)
+    Nsteps = 2
+    for i in range(Nsteps):
+        mdsim = load_lammps_txt(txtfiles[i], origin=np.array([8, 8, 8]), scale=scale)
+        pts = mdsim['POSITIONS']
+        img = mdscatter.dft(pts, qvecs)
         img = np.abs(img)**2
         img = np.reshape(img, detector.shape)
+        plt.imshow(np.log(img+1), origin='lower')
+        plt.show()
         dset[i,:,:] = np.reshape(img, detector.shape)
     t1 = time.time() - t0
     print('time taken = %f\n' % t1)

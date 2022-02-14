@@ -1,6 +1,6 @@
 # 3d Lennard-Jones melt
 
-units	real
+units	lj
 atom_style	atomic
 
 lattice	fcc 0.8442
