@@ -1,6 +1,13 @@
 # xpcs-baseline
 MD Generated samples to test XPCS algorithms
 
+## Requirements
+1. CUDA
+2. CMake
+3. Pybind11
+4. numpy
+5. h5py
+
 # Build mdscatter module
  ```shell
  cmake -DPYTHON_EXECUTABLE:FILEPATH=/usr/bin/pythonX.Y .
@@ -30,4 +37,5 @@ or
 ```shell
 python calc_gisaxs.py
 ```
-Simulation results are saved in a hdf5 file.
+Simulation results are saved in a hdf5 file. 
+
