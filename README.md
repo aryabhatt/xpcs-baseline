@@ -30,3 +30,4 @@ or
 ```shell
 python calc_gisaxs.py
 ```
+Simulation results are saved in a hdf5 file.
