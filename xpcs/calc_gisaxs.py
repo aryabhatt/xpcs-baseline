@@ -46,7 +46,7 @@ if __name__ == '__main__':
     
 
     # dwba coefficients
-    thata, alpha = det.angles(sdd, center)
+    theta, alpha = det.angles(sdd, center)
     fc = propagation_coeffs(alpha, alphai, refidx)
     
     # turn the crank
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     for i in range(Nsteps):
         mdsim = load_lammps_txt(txtfiles[i], origin=origin, scale=scale)
         pts = mdsim['POSITIONS']
-        ff = np.zeros_like(thata, dtype=np.complex_)
+        ff = np.zeros_like(theta, dtype=np.complex_)
         for j in range(4):
             ff += fc[j] * mdscatter.dft(pts, qvecs[j])
         img = np.abs(ff)**2
