@@ -6,6 +6,26 @@ set(MDScatter_VERSION_MAJOR 1)
 set(MDScatter_VERSION_MINOR 0)
 
 
+if (APPLE)
+    set(CMAKE_C_COMPILER clang)
+    set(CMAKE_CXX_COMPILER clang++)
+	set(CMAKE_OSX_ARCHITECTURES "x86_64")
+
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang\$")
+        set(OpenMP_C_FLAGS "-Xpreprocessor -fopenmp")
+        set(OpenMP_C_LIB_NAMES "omp")
+        set(OpenMP_omp_LIBRARY omp)
+		link_directories(/usr/local/lib)
+    endif()
+
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang\$")
+        set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp")
+        set(OpenMP_CXX_LIB_NAMES "omp")
+        set(OpenMP_omp_LIBRARY omp)
+		link_directories(/usr/local/lib)
+    endif()
+endif(APPLE)
+
 # C++11 Stuff
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -20,7 +40,7 @@ include_directories(${PYTHON_INCLUDE_DIRS})
 find_package(pybind11 REQUIRED)
 set(LIBS pybind11::module)
 
-find_package(OpenMP)
+find_package(OpenMP REQUIRED)
 if(OpenMP_FOUND)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif(OpenMP_FOUND)
@@ -41,6 +61,10 @@ endif()
 
 add_library(mdscatter MODULE ${SRC})
 target_link_libraries(mdscatter PRIVATE ${LIBS})
+if (APPLE)
+	target_link_libraries(mdscatter PRIVATE ${OpenMP_omp_LIBRARY})
+endif (APPLE)
+	
 set_target_properties(mdscatter PROPERTIES PREFIX "${PYTHON_MODULE_PREFIX}"
                                          SUFFIX "${PYTHON_MODULE_EXTENSION}")
                                         
